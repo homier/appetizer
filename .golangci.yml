@@ -1,0 +1,16 @@
+run:
+  go: "1.20"
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - goimports
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - revive
+    - staticcheck
+    - typecheck
+    - unused
