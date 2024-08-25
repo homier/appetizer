@@ -6,7 +6,7 @@ GOLANG_BIN=$(GOLANG_PATH)/bin
 BUILD_DIRECTORY=$(CURDIR)/.builds
 REPORT_DIRECTORY=$(CURDIR)/.reports
 
-GOLANGCI_LINT_VERSION=1.51.0
+GOLANGCI_LINT_VERSION=1.60.3
 
 APP_VERSION?=$(shell git describe --always --tags | sed 's/^v//')
 

@@ -11,16 +11,16 @@ import (
 	"github.com/homier/appetizer/log"
 )
 
-var (
-	version string
-)
+var Version string
 
 type srv struct {
-	l log.Logger
+	l    log.Logger
+	deps appetizer.Dependencies
 }
 
-func (s *srv) Init(l log.Logger, deps appetizer.Dependency) error {
+func (s *srv) Init(l log.Logger, deps appetizer.Dependencies) error {
 	s.l = l
+	s.deps = deps
 
 	s.l.Info().Msg("Initialized")
 
@@ -37,6 +37,10 @@ func (s *srv) Run(ctx context.Context) error {
 	return nil
 }
 
+func (s *srv) Stop() error {
+	return nil
+}
+
 func main() {
 	cli.VersionPrinter = func(ctx *cli.Context) {
 		fmt.Printf("%s\n", ctx.App.Version)
@@ -47,16 +51,22 @@ func main() {
 
 	app := &cli.App{
 		Name:    "appetizer",
-		Version: version,
+		Version: Version,
 		Commands: []*cli.Command{
 			{
 				Name:  "test",
 				Flags: []cli.Flag{},
-				Action: func(cCtx *cli.Context) error {
-					app := &appetizer.App{Name: "test", Nodes: []appetizer.Node{{
-						Name: "Test node",
-						Leaf: &srv{},
+				Action: func(_ *cli.Context) error {
+					app := &appetizer.App{Name: "test", Services: []appetizer.Service{{
+						Name:           "Test node",
+						Lifecycle:      &srv{},
+						RestartEnabled: true,
 					}}}
+
+					if err := app.Init(); err != nil {
+						return err
+					}
+
 					return app.Run(ctx)
 				},
 			},
