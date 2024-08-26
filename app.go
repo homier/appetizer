@@ -81,8 +81,7 @@ func (a *App) init() (errs error) {
 	for _, service := range a.Services {
 		log := a.serviceLogger(service.Name)
 
-		// TODO: Concrete types for dependencies
-		if err := service.Servicer.Init(log, service.Deps); err != nil {
+		if err := service.Servicer.Init(log); err != nil {
 			errs = stdErrors.Join(errs, err)
 		}
 	}
@@ -90,11 +89,9 @@ func (a *App) init() (errs error) {
 	return
 }
 
-func (a *App) runService(ctx context.Context, service *Service) error {
+func (a *App) runService(ctx context.Context, service *Service) (err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	var err error
 
 	enableRestart := service.RestartEnabled
 	if enableRestart && service.RestartOpts.Opts == nil {

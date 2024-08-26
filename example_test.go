@@ -11,25 +11,19 @@ import (
 	"github.com/homier/appetizer/log"
 )
 
-type (
-	QueueFiller struct {
-		logger log.Logger
-		deps   QueueFillerDeps
-	}
-
-	QueueFillerDeps chan int
-)
+type QueueFiller struct {
+	Queue  chan<- int
+	logger log.Logger
+}
 
 var _ appetizer.Servicer = (*QueueFiller)(nil)
 
 // Init implements appetizer.Servicer.
-func (q *QueueFiller) Init(log log.Logger, deps appetizer.Dependencies) error {
+func (q *QueueFiller) Init(log log.Logger) error {
 	q.logger = log
 
-	var ok bool
-	q.deps, ok = deps.(QueueFillerDeps)
-	if !ok {
-		return errors.New("invalid dependencies provided")
+	if q.Queue == nil {
+		return errors.New("queue has not been provided")
 	}
 
 	return nil
@@ -44,12 +38,12 @@ func (q *QueueFiller) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			q.deps <- i
+			q.Queue <- i
 		}
 	}
 
 	q.logger.Info().Msg("Finished")
-	close(q.deps)
+	close(q.Queue)
 	return nil
 }
 
@@ -57,14 +51,15 @@ func ExampleApp() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	queue := make(QueueFillerDeps, 10)
+	queue := make(chan int, 10)
 	app := &appetizer.App{
 		Name: "simple",
 		Services: []appetizer.Service{
 			{
-				Name:     "Queue filler",
-				Servicer: &QueueFiller{},
-				Deps:     queue,
+				Name: "Queue filler",
+				Servicer: &QueueFiller{
+					Queue: queue,
+				},
 			},
 		},
 	}
