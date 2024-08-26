@@ -29,6 +29,7 @@ func (a *App) Init() (errs error) {
 	for _, service := range a.Services {
 		log := a.serviceLogger(service.Name)
 
+		// TODO: Concrete types for dependencies
 		if err := service.Servicer.Init(log, service.Deps); err != nil {
 			errs = stdErrors.Join(errs, err)
 		}
