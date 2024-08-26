@@ -22,10 +22,14 @@ type App struct {
 func (a *App) Init() (errs error) {
 	a.log = a.appLogger()
 
+	if len(a.Services) == 0 {
+		return
+	}
+
 	for _, service := range a.Services {
 		log := a.serviceLogger(service.Name)
 
-		if err := service.Lifecycle.Init(log, service.Deps); err != nil {
+		if err := service.Servicer.Init(log, service.Deps); err != nil {
 			errs = stdErrors.Join(errs, err)
 		}
 	}
@@ -34,59 +38,68 @@ func (a *App) Init() (errs error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	a.log.Info().Msg("Application started")
-	err := <-a.RunCh(ctx)
-	a.log.Info().Msg("Application stopped")
-
-	return err
+	return <-a.RunCh(ctx)
 }
 
 func (a *App) RunCh(ctx context.Context) <-chan error {
 	errCh := make(chan error, 1)
+	if len(a.Services) == 0 {
+		close(errCh)
+		return errCh
+	}
 
-	ctx, cancel := context.WithCancel(ctx)
 	pool := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 
 	for _, service := range a.Services {
 		service := service
 
 		pool.Go(func(ctx context.Context) error {
-			var err error
-
-			enableRestart := service.RestartEnabled
-			if enableRestart && service.RestartOpts.Opts == nil {
-				a.log.Warn().Str("service", service.Name).Msg(
-					"Service is set up as restartable," +
-						" but no restart options were provided." +
-						" Restart is skipped.",
-				)
-				enableRestart = false
-			}
-
-			if enableRestart {
-				err = retry.With(ctx, service.RestartOpts)
-			} else {
-				err = service.Lifecycle.Run(ctx)
-			}
-
-			if err != nil {
-				err = errors.Wrapf(err, "service '%s' crashed", service.Name)
-			}
-
-			return err
+			return a.runService(ctx, &service)
 		})
 	}
 
+	a.log.Info().Msg("Application started")
+
 	go func() {
-		defer cancel()
 		defer close(errCh)
 
 		if err := pool.Wait(); err != nil {
 			errCh <- err
 		}
+
+		a.log.Info().Msg("Application stopped")
 	}()
 
 	return errCh
+}
+
+func (a *App) runService(ctx context.Context, service *Service) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var err error
+
+	enableRestart := service.RestartEnabled
+	if enableRestart && service.RestartOpts.Opts == nil {
+		a.log.Warn().Str("service", service.Name).Msg(
+			"Service is set up as restartable," +
+				" but no options were provided." +
+				" Restart is skipped.",
+		)
+		enableRestart = false
+	}
+
+	if enableRestart {
+		err = retry.With(ctx, service.Servicer.Run, service.RestartOpts)
+	} else {
+		err = service.Servicer.Run(ctx)
+	}
+
+	if err != nil {
+		err = errors.Wrapf(err, "service '%s' crashed", service.Name)
+	}
+
+	return err
 }
 
 func (a *App) appLogger() log.Logger {

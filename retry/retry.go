@@ -12,11 +12,9 @@ type Opts struct {
 
 	StopError error
 	MaxRetry  uint64
-
-	Target func(ctx context.Context) error
 }
 
-func With(ctx context.Context, opts Opts) error {
+func With(ctx context.Context, target func(context.Context) error, opts Opts) error {
 	var strategy backoff.BackOff
 
 	strategy = backoff.WithContext(opts.Opts, ctx)
@@ -27,7 +25,7 @@ func With(ctx context.Context, opts Opts) error {
 	}
 
 	return backoff.Retry(func() error {
-		err := opts.Target(ctx)
+		err := target(ctx)
 		if err == nil {
 			return nil
 		}

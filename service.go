@@ -7,20 +7,21 @@ import (
 	"github.com/homier/appetizer/retry"
 )
 
-type Lifecycle interface {
+//go:generate mockery --name Servicer
+type Servicer interface {
 	Init(log log.Logger, deps Dependencies) error
 	Run(ctx context.Context) error
-	Stop() error
 }
 
 type Service struct {
-	Name      string
-	Lifecycle Lifecycle
-	Deps      Dependencies
+	Name     string
+	Servicer Servicer
+	Deps     Dependencies
 
 	RestartEnabled bool
 	RestartOpts    retry.Opts
 }
 
+//go:generate mockery --name Dependencies
 type Dependencies interface {
 }

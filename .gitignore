@@ -1,1 +1,6 @@
 .*
+
+!.mockery.yaml
+!.golangci.yml
+!.gitignore
+
