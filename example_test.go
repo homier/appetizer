@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/homier/appetizer"
 	"github.com/homier/appetizer/log"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -66,10 +67,6 @@ func ExampleApp() {
 				Deps:     queue,
 			},
 		},
-	}
-
-	if err := app.Init(); err != nil {
-		panic(err)
 	}
 
 	doneCh := make(chan struct{}, 1)

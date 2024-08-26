@@ -1,5 +1,5 @@
 .DEFAULT: help
-.PHONY: helps deps tidy lint test gen build clean
+.PHONY: helps deps tidy lint test gen clean
 
 GOLANG_PATH=$(CURDIR)/.go
 GOLANG_BIN=$(GOLANG_PATH)/bin
@@ -35,12 +35,6 @@ test: deps ## Run project tests
 
 gen: deps ## Run code gen
 	go generate ./...
-
-build: deps ## Build project binary
-	GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build \
-		-gcflags=all=-dwarf=false \
-		-ldflags '-s -w -X main.Version=$(APP_VERSION)' \
-		-o $(BUILD_DIRECTORY)/ ./...
 
 clean: ## Cleanup project dependencies
 	@rm -rf $(GOLANG_PATH) $(BUILD_DIRECTORY)
