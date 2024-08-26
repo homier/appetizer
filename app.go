@@ -66,8 +66,6 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 		if err := pool.Wait(); err != nil {
 			errCh <- err
 		}
-
-		a.log.Info().Msg("Application stopped")
 	}()
 
 	return errCh
