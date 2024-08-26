@@ -65,10 +65,6 @@ func main() {
     ctx, cancel := appetizer.NotifyContext()
     defer cancel()
 
-    if err := app.Init(); err != nil {
-        panic(err)
-    }
-
     if err := app.Run(ctx); err != nil {
         panic(err)
     }

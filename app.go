@@ -19,25 +19,6 @@ type App struct {
 	log log.Logger
 }
 
-func (a *App) Init() (errs error) {
-	a.log = a.appLogger()
-
-	if len(a.Services) == 0 {
-		return
-	}
-
-	for _, service := range a.Services {
-		log := a.serviceLogger(service.Name)
-
-		// TODO: Concrete types for dependencies
-		if err := service.Servicer.Init(log, service.Deps); err != nil {
-			errs = stdErrors.Join(errs, err)
-		}
-	}
-
-	return
-}
-
 func (a *App) Run(ctx context.Context) error {
 	return <-a.RunCh(ctx)
 }
@@ -46,6 +27,13 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 	errCh := make(chan error, 1)
 	if len(a.Services) == 0 {
 		close(errCh)
+		return errCh
+	}
+
+	if err := a.init(); err != nil {
+		errCh <- err
+		close(errCh)
+
 		return errCh
 	}
 
@@ -70,6 +58,25 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 	}()
 
 	return errCh
+}
+
+func (a *App) init() (errs error) {
+	a.log = a.appLogger()
+
+	if len(a.Services) == 0 {
+		return
+	}
+
+	for _, service := range a.Services {
+		log := a.serviceLogger(service.Name)
+
+		// TODO: Concrete types for dependencies
+		if err := service.Servicer.Init(log, service.Deps); err != nil {
+			errs = stdErrors.Join(errs, err)
+		}
+	}
+
+	return
 }
 
 func (a *App) runService(ctx context.Context, service *Service) error {

@@ -68,10 +68,6 @@ func ExampleApp() {
 		},
 	}
 
-	if err := app.Init(); err != nil {
-		panic(err)
-	}
-
 	doneCh := make(chan struct{}, 1)
 	go func() {
 		defer close(doneCh)

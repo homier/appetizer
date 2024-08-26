@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestApp_Init(t *testing.T) {
+func TestApp_init(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupServices func(t *testing.T) []Service
@@ -109,7 +109,7 @@ func TestApp_Init(t *testing.T) {
 				Debug:    true,
 			}
 
-			err := app.Init()
+			err := app.init()
 			if tt.wantErr {
 				if assert.Error(t, err) {
 					assert.ErrorContains(t, err, tt.err.Error())
@@ -383,6 +383,7 @@ func TestApp_Run(t *testing.T) {
 			setupCtx: cancelledContextFunc,
 			setupServices: func(t *testing.T) []Service {
 				srv := NewMockServicer(t)
+				srv.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
 				srv.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).RunAndReturn(func(ctx context.Context) error {
 					<-ctx.Done()
 					return ctx.Err()
@@ -398,16 +399,36 @@ func TestApp_Run(t *testing.T) {
 			err:     context.Canceled,
 		},
 		{
+			name:     "init failed",
+			setupCtx: defaultContextFunc,
+			setupServices: func(t *testing.T) []Service {
+				srv1 := NewMockServicer(t)
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(errors.New("init failed")).Once()
+
+				return []Service{
+					{
+						Name:           "srv1",
+						Servicer:       srv1,
+						RestartEnabled: false,
+					},
+				}
+			},
+			wantErr: true,
+			err:     errors.New("init failed"),
+		},
+		{
 			name:     "one service failed",
 			setupCtx: defaultContextFunc,
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
 				srv1.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).RunAndReturn(func(ctx context.Context) error {
 					<-ctx.Done()
 					return nil
 				})
 
 				srv2 := NewMockServicer(t)
+				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
 				srv2.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).Return(errors.New("unexpected error from srv2")).Once()
 
 				return []Service{
