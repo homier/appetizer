@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/homier/appetizer/retry"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/homier/appetizer/retry"
 )
 
 func TestApp_init(t *testing.T) {
@@ -210,7 +211,7 @@ func TestApp_runService(t *testing.T) {
 							MaxElapsedTime:  time.Millisecond * 10,
 							Clock:           backoff.SystemClock,
 						},
-						StopError: ErrCritical,
+						CriticalError: ErrCritical,
 					},
 				}
 			},
@@ -238,8 +239,8 @@ func TestApp_runService(t *testing.T) {
 							MaxElapsedTime:  time.Millisecond * 10,
 							Clock:           backoff.SystemClock,
 						},
-						StopError: ErrCritical,
-						MaxRetry:  1,
+						CriticalError: ErrCritical,
+						MaxRetry:      1,
 					},
 				}
 			},

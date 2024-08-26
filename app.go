@@ -1,3 +1,5 @@
+// Appetizer is simple yet effective way to create concurrent applications with background services.
+// See README.md for more information.
 package appetizer
 
 import (
@@ -12,17 +14,26 @@ import (
 )
 
 type App struct {
-	Name     string
+	// Application name. This name will be used as the "app" field value in logger
+	Name string
+
+	// A list of services to run. If empty, app will exit immediately.
 	Services []Service
-	Debug    bool
+
+	// Configure app to run in debug mode. Will set logger level to `zerolog.DebugLevel`.
+	Debug bool
 
 	log log.Logger
 }
 
+// Run application, blocking until error or nil is returned.
 func (a *App) Run(ctx context.Context) error {
 	return <-a.RunCh(ctx)
 }
 
+// Run application in background, returning an error channel.
+// Application is considered stopped when that channel is closed
+// or has an error within.
 func (a *App) RunCh(ctx context.Context) <-chan error {
 	errCh := make(chan error, 1)
 	if len(a.Services) == 0 {

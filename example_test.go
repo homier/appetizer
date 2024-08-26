@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/homier/appetizer"
 	"github.com/homier/appetizer/log"
-	"github.com/pkg/errors"
 )
 
 type (

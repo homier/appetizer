@@ -7,13 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Retry options definition.
 type Opts struct {
+	// See `https://github.com/cenkalti/backoff` for more information.
 	Opts backoff.BackOff
 
-	StopError error
-	MaxRetry  uint64
+	// If set, no retries will be attempted if a target callable returns
+	// this exact error.
+	CriticalError error
+
+	// If set to something greater than 0, a target callable won't be run
+	// more than `MaxRetry + 1` times.
+	MaxRetry uint64
 }
 
+// Run provided `target` callable with retry policy.
+// Based on `https://github.com/cenkalti/backoff` library.
 func With(ctx context.Context, target func(context.Context) error, opts Opts) error {
 	var strategy backoff.BackOff
 
@@ -30,11 +39,11 @@ func With(ctx context.Context, target func(context.Context) error, opts Opts) er
 			return nil
 		}
 
-		if opts.StopError == nil {
+		if opts.CriticalError == nil {
 			return err
 		}
 
-		if errors.Is(err, opts.StopError) {
+		if errors.Is(err, opts.CriticalError) {
 			return backoff.Permanent(err)
 		}
 
