@@ -1,4 +1,4 @@
-// Appetizer is simple yet effective way to create concurrent applications with background services.
+// Appetizer is simple yet effective way to create applications with background services.
 // See README.md for more information.
 package appetizer
 

@@ -1,7 +1,7 @@
 # appetizer
 
 ## TL;DR
-Appetizer is simple yet effective way to create concurrent applications with background services.
+Appetizer is simple yet effective way to create applications with background services.
 
 ## Why?
 My requirements have been always simple: I need a tool to run multiple instances of something in background,
