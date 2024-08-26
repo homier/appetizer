@@ -7,6 +7,13 @@ Appetizer is simple yet effective way to create concurrent applications with bac
 My requirements have been always simple: I need a tool to run multiple instances of something in background,
 while being able to restart them if needed or to fail fast otherwise.
 
+## Features
+* Declarative approach to define your application
+* Consistent logging for each service, by injecting `zerolog.Logger` instance on service initialization
+* Awaiting service dependencies before run (in progress)
+* Any service could be configured as restartable thanks to awesome [cenkalti/backoff](https://github.com/cenkalti/backoff) library.
+* Integrated pprof (coming soon)
+
 ## Examples
 ### Simple time printer
 ```go
