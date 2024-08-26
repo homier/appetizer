@@ -9,8 +9,7 @@ while being able to restart them if needed or to fail fast otherwise.
 
 ## Features
 * Declarative approach to define your application
-* Consistent logging for each service, by injecting `zerolog.Logger` instance on service initialization
-* Awaiting service dependencies before run (in progress)
+* Consistent logging for each service, by injecting [zerolog.Logger](https://github.com/rs/zerolog) instance on service initialization
 * Any service could be configured as restartable thanks to awesome [cenkalti/backoff](https://github.com/cenkalti/backoff) library.
 * Integrated pprof (coming soon)
 
@@ -21,6 +20,7 @@ package main
 
 import (
     "context"
+    "errors"
     "time"
 
     "github.com/homier/appetizer"
@@ -33,7 +33,7 @@ type TimePrinter struct {
     log log.Logger
 }
 
-func (tp *TimePrinter) Init(log log.Logger, _ appetizer.Dependencies) error {
+func (tp *TimePrinter) Init(log log.Logger) error {
     tp.log = log
 
     if tp.TickDuration == time.Duration(0) {

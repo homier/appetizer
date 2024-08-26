@@ -16,7 +16,7 @@ type Servicer interface {
 	// An initial stage for every service lifecycle.
 	// It could be possible called more than once, so
 	// you need to decide by yourself, whether you'll support this or not.
-	Init(log log.Logger, deps Dependencies) error
+	Init(log log.Logger) error
 
 	// Run your logic here.
 	// If this method returns `nil`, a service is considered stopped,
@@ -35,10 +35,6 @@ type Service struct {
 	// Servicer value. Actual logic for the service.
 	Servicer Servicer
 
-	// Optional dependencies for the servicer. It will be passed as the parameter
-	// during `Init` call of the servicer.
-	Deps Dependencies
-
 	// Whether to restart failed service or not.
 	RestartEnabled bool
 
@@ -46,10 +42,4 @@ type Service struct {
 	// a restart policy you need.
 	// NOTE: `RestartOpts.Opts` must be defined, otherwise service won't be restarted.
 	RestartOpts retry.Opts
-}
-
-// An interface each `Dependencies` type must implement.
-//
-//go:generate mockery --name Dependencies
-type Dependencies interface {
 }

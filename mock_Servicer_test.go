@@ -22,17 +22,17 @@ func (_m *MockServicer) EXPECT() *MockServicer_Expecter {
 	return &MockServicer_Expecter{mock: &_m.Mock}
 }
 
-// Init provides a mock function with given fields: log, deps
-func (_m *MockServicer) Init(log zerolog.Logger, deps Dependencies) error {
-	ret := _m.Called(log, deps)
+// Init provides a mock function with given fields: log
+func (_m *MockServicer) Init(log zerolog.Logger) error {
+	ret := _m.Called(log)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Init")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(zerolog.Logger, Dependencies) error); ok {
-		r0 = rf(log, deps)
+	if rf, ok := ret.Get(0).(func(zerolog.Logger) error); ok {
+		r0 = rf(log)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -47,14 +47,13 @@ type MockServicer_Init_Call struct {
 
 // Init is a helper method to define mock.On call
 //   - log zerolog.Logger
-//   - deps Dependencies
-func (_e *MockServicer_Expecter) Init(log interface{}, deps interface{}) *MockServicer_Init_Call {
-	return &MockServicer_Init_Call{Call: _e.mock.On("Init", log, deps)}
+func (_e *MockServicer_Expecter) Init(log interface{}) *MockServicer_Init_Call {
+	return &MockServicer_Init_Call{Call: _e.mock.On("Init", log)}
 }
 
-func (_c *MockServicer_Init_Call) Run(run func(log zerolog.Logger, deps Dependencies)) *MockServicer_Init_Call {
+func (_c *MockServicer_Init_Call) Run(run func(log zerolog.Logger)) *MockServicer_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(zerolog.Logger), args[1].(Dependencies))
+		run(args[0].(zerolog.Logger))
 	})
 	return _c
 }
@@ -64,7 +63,7 @@ func (_c *MockServicer_Init_Call) Return(_a0 error) *MockServicer_Init_Call {
 	return _c
 }
 
-func (_c *MockServicer_Init_Call) RunAndReturn(run func(zerolog.Logger, Dependencies) error) *MockServicer_Init_Call {
+func (_c *MockServicer_Init_Call) RunAndReturn(run func(zerolog.Logger) error) *MockServicer_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -31,21 +31,19 @@ func TestApp_init(t *testing.T) {
 			name: "no errors on services init",
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
-				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
 
 				srv2 := NewMockServicer(t)
-				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
+				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
 
 				return []Service{
 					{
 						Name:     t.Name() + "_srv1",
 						Servicer: srv1,
-						Deps:     nil,
 					},
 					{
 						Name:     t.Name() + "_srv2",
 						Servicer: srv2,
-						Deps:     nil,
 					},
 				}
 			},
@@ -54,21 +52,20 @@ func TestApp_init(t *testing.T) {
 			name: "1 out of 2 service failed",
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
-				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(errors.New("unexpected error")).Once()
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).
+					Return(errors.New("unexpected error")).Once()
 
 				srv2 := NewMockServicer(t)
-				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
+				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
 
 				return []Service{
 					{
 						Name:     t.Name() + "_srv1",
 						Servicer: srv1,
-						Deps:     nil,
 					},
 					{
 						Name:     t.Name() + "_srv2",
 						Servicer: srv2,
-						Deps:     nil,
 					},
 				}
 			},
@@ -79,21 +76,21 @@ func TestApp_init(t *testing.T) {
 			name: "both services failed",
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
-				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(errors.New("unexpected error1")).Once()
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).
+					Return(errors.New("unexpected error1")).Once()
 
 				srv2 := NewMockServicer(t)
-				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(errors.New("unexpected error2")).Once()
+				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).
+					Return(errors.New("unexpected error2")).Once()
 
 				return []Service{
 					{
 						Name:     t.Name() + "_srv1",
 						Servicer: srv1,
-						Deps:     nil,
 					},
 					{
 						Name:     t.Name() + "_srv2",
 						Servicer: srv2,
-						Deps:     nil,
 					},
 				}
 			},
@@ -384,11 +381,12 @@ func TestApp_Run(t *testing.T) {
 			setupCtx: cancelledContextFunc,
 			setupServices: func(t *testing.T) []Service {
 				srv := NewMockServicer(t)
-				srv.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
-				srv.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).RunAndReturn(func(ctx context.Context) error {
-					<-ctx.Done()
-					return ctx.Err()
-				})
+				srv.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
+				srv.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).
+					RunAndReturn(func(ctx context.Context) error {
+						<-ctx.Done()
+						return ctx.Err()
+					})
 
 				return []Service{{
 					Name:           "srv1",
@@ -404,7 +402,8 @@ func TestApp_Run(t *testing.T) {
 			setupCtx: defaultContextFunc,
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
-				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(errors.New("init failed")).Once()
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).
+					Return(errors.New("init failed")).Once()
 
 				return []Service{
 					{
@@ -422,15 +421,17 @@ func TestApp_Run(t *testing.T) {
 			setupCtx: defaultContextFunc,
 			setupServices: func(t *testing.T) []Service {
 				srv1 := NewMockServicer(t)
-				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
-				srv1.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).RunAndReturn(func(ctx context.Context) error {
-					<-ctx.Done()
-					return nil
-				})
+				srv1.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
+				srv1.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).
+					RunAndReturn(func(ctx context.Context) error {
+						<-ctx.Done()
+						return nil
+					})
 
 				srv2 := NewMockServicer(t)
-				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger"), nil).Return(nil).Once()
-				srv2.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).Return(errors.New("unexpected error from srv2")).Once()
+				srv2.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil).Once()
+				srv2.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).
+					Return(errors.New("unexpected error from srv2")).Once()
 
 				return []Service{
 					{
