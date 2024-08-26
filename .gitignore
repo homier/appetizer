@@ -3,4 +3,5 @@
 !.mockery.yaml
 !.golangci.yml
 !.gitignore
+!.github
 
