@@ -30,7 +30,7 @@ test: deps ## Run project tests
 	rm -rf $(REPORT_DIRECTORY)
 	mkdir $(REPORT_DIRECTORY)
 
-	go test -v -race -coverprofile=$(REPORT_DIRECTORY)/cover ./...
+	go test -v -race -timeout=5s -coverprofile=$(REPORT_DIRECTORY)/cover ./...
 	go tool cover -func $(REPORT_DIRECTORY)/cover
 
 gen: deps ## Run code gen

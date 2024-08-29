@@ -461,6 +461,8 @@ func TestApp_Run(t *testing.T) {
 			}
 
 			err := app.Run(ctx)
+			assert.True(t, app.startedWaiter.Is(false))
+
 			if !tt.wantErr {
 				assert.NoError(t, err)
 				return
@@ -471,4 +473,113 @@ func TestApp_Run(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApp_Log(t *testing.T) {
+	app := &App{Name: t.Name()}
+	app.ensureLog()
+
+	assert.Equal(t, &app.log, app.Log())
+}
+
+func TestApp_WaitCh(t *testing.T) {
+	t.Run("App has not been started", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+		defer cancel()
+
+		app := &App{Name: t.Name()}
+
+		select {
+		case <-ctx.Done():
+		case <-app.WaitCh():
+			t.Fatal("timeout should've happen")
+		}
+
+	})
+
+	t.Run("App started and stopped", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+		defer cancel()
+
+		app := &App{Name: t.Name()}
+
+		if assert.NoError(t, app.Run(context.Background())) {
+			select {
+			case <-ctx.Done():
+			case <-app.WaitCh():
+				t.Fatal("timeout should've happen")
+			}
+		}
+	})
+
+	t.Run("With services", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
+		defer cancel()
+
+		srv := NewMockServicer(t)
+		srv.EXPECT().Init(mock.AnythingOfType("zerolog.Logger")).Return(nil)
+		srv.EXPECT().Run(mock.AnythingOfType("*context.cancelCtx")).RunAndReturn(func(ctx context.Context) error {
+			select {
+			case <-time.After(time.Second):
+				return errors.New("context must've been cancelled at this time")
+			case <-ctx.Done():
+				return nil
+			}
+		})
+
+		app := &App{
+			Name: t.Name(),
+			Services: []Service{{
+				Name:     t.Name(),
+				Servicer: srv,
+			}},
+		}
+
+		runCh := app.RunCh(ctx)
+		select {
+		case err := <-runCh:
+			t.Fatal("Application run returned before wait: ", err)
+		case <-app.WaitCh():
+		case <-ctx.Done():
+			t.Fatal("Timeout while waiting for an application")
+		}
+
+		<-runCh
+
+		t.Run("Restart", func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
+			defer cancel()
+
+			select {
+			case err := <-app.RunCh(ctx):
+				t.Fatal("Application run returned before wait: ", err)
+			case <-app.WaitCh():
+			case <-ctx.Done():
+				t.Fatal("Timeout while waiting for an application")
+			}
+		})
+	})
+}
+
+func TestApp_Wait(t *testing.T) {
+	t.Run("Started", func(t *testing.T) {
+		app := &App{Name: t.Name()}
+		app.startedWaiter.Set(true)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5)
+		defer cancel()
+
+		assert.NoError(t, app.Wait(ctx))
+	})
+
+	t.Run("Timeout", func(t *testing.T) {
+		app := &App{Name: t.Name()}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5)
+		defer cancel()
+
+		if err := app.Wait(ctx); assert.Error(t, err) {
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
+		}
+	})
 }

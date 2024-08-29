@@ -11,7 +11,7 @@ while being able to restart them if needed or to fail fast otherwise.
 * Declarative approach to define your application
 * Consistent logging for each service, by injecting [zerolog.Logger](https://github.com/rs/zerolog) instance on service initialization
 * Any service could be configured as restartable thanks to awesome [cenkalti/backoff](https://github.com/cenkalti/backoff) library.
-* Integrated pprof (coming soon)
+* Integrated HTTP servicer with pprof
 
 ## Examples
 ### Simple time printer
@@ -75,6 +75,56 @@ func main() {
     if err := app.Run(ctx); err != nil {
         panic(err)
     }
+}
+```
+
+### HTTP servicer
+```go
+package main
+
+import (
+	"io"
+	"net/http"
+
+	"github.com/homier/appetizer"
+	"github.com/homier/appetizer/services"
+)
+
+func main() {
+	app := appetizer.App{
+		Name:  "WebServer",
+		Debug: true,
+		Services: []appetizer.Service{{
+			Name: "httpServer",
+			Servicer: &services.HTTPServer{
+				Handlers: []services.Handler{{
+					Path: "GET /hello",
+					Handler: func(w http.ResponseWriter, _ *http.Request) {
+						if _, err := io.WriteString(w, "world\n"); err != nil {
+							panic(err)
+						}
+					},
+				}},
+				PprofEnabled: true,
+			},
+		}},
+	}
+
+	ctx, cancel := appetizer.NotifyContext()
+	defer cancel()
+
+	runCh := app.RunCh(ctx)
+
+	<-app.WaitCh()
+
+	select {
+	case <-ctx.Done():
+		return
+	case err := <-runCh:
+		if err != nil {
+			app.Log().Fatal().Err(err).Msg("App crashed")
+		}
+	}
 }
 ```
 
