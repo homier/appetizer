@@ -74,14 +74,14 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 		WithFirstError().
 		WithMaxGoroutines(len(a.Services))
 
-	a.log.Debug().Msg("app: run: pool: putting services in a pool")
+	a.log.Debug().Msg("app: run: pool: starting services...")
 
 	readyWg := &sync.WaitGroup{}
 	for _, service := range a.Services {
 		service := service
 		readyWg.Add(1)
 
-		a.log.Debug().Msgf("app: run: pool: service: '%s': putting in a pool", service.Name)
+		a.log.Debug().Msgf("app: run: pool: service: '%s': starting...", service.Name)
 		pool.Go(func(ctx context.Context) error {
 			readyWg.Done()
 
@@ -89,7 +89,7 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 		})
 	}
 
-	a.log.Debug().Msg("app: run: pool: waiting for all services to be handled by pool")
+	a.log.Debug().Msg("app: run: pool: waiting for all services to be started")
 	readyWg.Wait()
 
 	a.log.Info().Msg("app: run: started")
