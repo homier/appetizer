@@ -11,7 +11,7 @@ while being able to restart them if needed or to fail fast otherwise.
 * Declarative approach to define your application
 * Consistent logging for each service, by injecting [zerolog.Logger](https://github.com/rs/zerolog) instance on service initialization
 * Any service could be configured as restartable thanks to awesome [cenkalti/backoff](https://github.com/cenkalti/backoff) library.
-* Integrated pprof (coming soon)
+* Integrated HTTP servicer with pprof
 
 ## Examples
 ### Simple time printer

@@ -103,7 +103,7 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 			errCh <- err
 		}
 
-		a.log.Debug().Msg("app: run: pool: stopped")
+		a.log.Debug().Msg("app: pool: stopped")
 	}()
 
 	return errCh
