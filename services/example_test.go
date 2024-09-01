@@ -40,7 +40,7 @@ func ExampleHTTPServer() {
 
 	<-app.WaitCh()
 
-	resp, err := http.Get("http://" + services.DefaultAdress + "/hello")
+	resp, err := http.Get("http://" + services.DefaultAddress + "/hello")
 	if err != nil {
 		app.Log().Fatal().Err(err).Msg("Could not query test HTTP server")
 	}

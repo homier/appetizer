@@ -7,6 +7,7 @@ import (
 
 var DefaultProfilerURIPrefix = "/debug/pprof/"
 
+// Returns a net/http.ServeMux with pprof handlers registered.
 func PprofMuxer(prefix string) *http.ServeMux {
 	if prefix == "" {
 		prefix = DefaultProfilerURIPrefix

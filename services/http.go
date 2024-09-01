@@ -12,19 +12,24 @@ import (
 )
 
 var (
-	DefaultAdress              = "127.0.0.1:9000"
+	DefaultAddress             = "127.0.0.1:9000"
 	DefaultGracefulStopEnabled = true
 	DefaultGracefulStopTimeout = time.Second * 5
 )
 
+// An alias for net/http.Handler interface.
 type Muxer = http.Handler
+
+// A type for defining a pair of net/http.HandlerFunc and its URI path.
 type Handler struct {
 	Path    string
 	Handler http.HandlerFunc
 }
 
+// Function type used as *net/http.Server factory.
 type ServerFactory func(config HTTPServerConfig, handlers []Handler, muxers ...Muxer) *http.Server
 
+// Returns default *net/http.Server.
 func DefaultServerFactory(config HTTPServerConfig, handlers []Handler, muxers ...Muxer) *http.Server {
 	srv := &http.Server{
 		Addr:              config.Address,
@@ -39,6 +44,7 @@ func DefaultServerFactory(config HTTPServerConfig, handlers []Handler, muxers ..
 	return srv
 }
 
+// Returns a muxer with applied handlers and children muxers.
 func NewMuxer(uri string, handlers []Handler, muxers ...Muxer) *http.ServeMux {
 	if uri == "" {
 		uri = "/"
@@ -60,6 +66,8 @@ func NewMuxer(uri string, handlers []Handler, muxers ...Muxer) *http.ServeMux {
 	return root
 }
 
+// High level server configuration.
+// See net/http.Server for more.
 type HTTPServerConfig struct {
 	Address string `json:"address" default:"127.0.0.1:9000"`
 	BaseURL string `json:"base_url" default:"/"`
@@ -76,17 +84,35 @@ type HTTPServerConfig struct {
 	TLSEnabled bool `json:"tls_enabled" default:"false"`
 }
 
+// An http server that implements appetizer.Servicer interface.
+// Allows to predefine HTTP handlers and a list of muxers to include.
 type HTTPServer struct {
+	// Server configuration
 	Config HTTPServerConfig
 
-	Handlers      []Handler
-	Muxers        []Muxer
+	// A list of handlers that are including in the root muxer.
+	// A Config.BaseURL will be used as prefix for that handlers.
+	Handlers []Handler
+
+	// A list of children muxers that root muxer will include.
+	Muxers []Muxer
+
+	// A factory to return a *net/http.Server instance.
+	// If nil, the DefaultServerFactory will be used.
 	ServerFactory ServerFactory
 
+	// Whether to stop server gracefully or not.
 	GracefulStopEnabled bool
+
+	// If graceful stop is enabled, this timeout will be used
+	// to wait until its stop. If timeout has reached,
+	// server exits immediately.
 	GracefulStopTimeout time.Duration
 
-	PprofEnabled   bool
+	// Whether to enable pprof muxer or not.
+	PprofEnabled bool
+
+	// If pprof is enabled, this URI will be used.
 	PprofURIPrefix string
 
 	server *http.Server
@@ -95,6 +121,8 @@ type HTTPServer struct {
 	mu  sync.Mutex
 }
 
+// Initializes HTTPServer instance.
+// Building of a *net/http.Server instance happens here.
 func (hs *HTTPServer) Init(log log.Logger) error {
 	hs.mu.Lock()
 	defer hs.mu.Unlock()
@@ -112,13 +140,16 @@ func (hs *HTTPServer) Init(log log.Logger) error {
 	}
 
 	if hs.Config.Address == "" {
-		hs.Config.Address = DefaultAdress
+		hs.Config.Address = DefaultAddress
 	}
 
 	hs.server = factory(hs.Config, hs.Handlers, muxers...)
 	return nil
 }
 
+// Runs the configured server in background and waits until
+// its exit or the context cancellation.
+// Returns either a server error, or a context error, or a server stop error.
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	runCh := hs.runServer()
 

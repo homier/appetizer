@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 )
 
+// Waiter is a special struct that provides a group of methods to wait the
+// internal condition to become true and to manage that condition.
 type Waiter struct {
 	ready atomic.Bool
 
@@ -14,6 +16,10 @@ type Waiter struct {
 	cond *sync.Cond
 }
 
+// Blocks until the internal condition is set to true,
+// or the provided context is either cancelled or timed out.
+// If context is cancelled/timed out, a context error is returning,
+// otherwise no error is returning.
 func (w *Waiter) Wait(ctx context.Context) error {
 	select {
 	case <-w.WaitCh():
@@ -23,6 +29,8 @@ func (w *Waiter) Wait(ctx context.Context) error {
 	}
 }
 
+// Returns a channel that will be closed when the internal condition
+// is set to true.
 func (w *Waiter) WaitCh() <-chan struct{} {
 	ch := make(chan struct{}, 1)
 	if w.ready.Load() {
@@ -48,6 +56,9 @@ func (w *Waiter) WaitCh() <-chan struct{} {
 	return ch
 }
 
+// Sets the internal condition to the provided ready value.
+// If the provided value is true, all of the wait channels
+// will be closed, signalling the readiness of the waiter.
 func (w *Waiter) Set(ready bool) {
 	if swapped := w.ready.CompareAndSwap(!ready, ready); ready && swapped {
 		w.ensureCond()
@@ -55,6 +66,7 @@ func (w *Waiter) Set(ready bool) {
 	}
 }
 
+// Checks that the internal condition is equal to the provided boolean value.
 func (w *Waiter) Is(ready bool) bool {
 	return w.ready.Load() == ready
 }

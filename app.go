@@ -109,18 +109,25 @@ func (a *App) RunCh(ctx context.Context) <-chan error {
 	return errCh
 }
 
+// Returns a copy of the application logger.
 func (a *App) Log() *log.Logger {
-	log := a.log.With().Logger()
+	a.ensureLog()
 
+	log := a.log.With().Logger()
 	return &log
 }
 
-func (a *App) WaitCh() <-chan struct{} {
-	return a.startedWaiter.WaitCh()
-}
-
+// Blocks until the app is started,
+// or the provided context is either cancelled or timed out.
+// If context is cancelled/timed out, a context error is returning,
+// otherwise no error is returning.
 func (a *App) Wait(ctx context.Context) error {
 	return a.startedWaiter.Wait(ctx)
+}
+
+// Returns a channel, that will be closed when application is started.
+func (a *App) WaitCh() <-chan struct{} {
+	return a.startedWaiter.WaitCh()
 }
 
 func (a *App) init() (errs error) {
